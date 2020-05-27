@@ -1,7 +1,7 @@
 # Личный проект «Кексобукинг» [![Build status][travis-image]][travis-url]
 
 * Студент: [Egor Nazarovich](https://up.htmlacademy.ru/javascript/20/user/1065481).
-* Наставник: `Неизвестно`.
+* Наставник: [Виталий Кудла](https://htmlacademy.ru/profile/vkudla).
 
 ---
 
