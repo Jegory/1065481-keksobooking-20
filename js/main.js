@@ -49,13 +49,8 @@ var map = document.querySelector('.map');
 var pin = document.querySelector('.map__pins');
 var pinTemplate = document.querySelector('#pin').content.querySelector('.map__pin');
 
-var filters = document.querySelector('.map__filters')
-var minY = map.offsetHeight - filters.offsetHeight;
-var title = document.querySelector('.map__title');
-var maxY = map.offsetHeight - title.offsetHeight;
-
-// random из числа
-var getRandomNumber = function (max) {
+// ФУНКЦИЯ random из числа
+var getRandomNumber = function (max, min) {
   return Math.floor(Math.random() * (max - min + 1));
 };
 
@@ -69,20 +64,20 @@ var getRental = function (count) {
       },
       offer: {
         title: TITLES[getRandomNumber(TITLES.length)],
-        address: byX + ', ' + byY,
-        price: getRandomNumber(10000),
-        type: TYPES[getRandomArray(TYPES.length)],
-        rooms: getRandomNumber(20),
-        guests: getRandomNumber(100),
-        checkin: TIMES[getRandomArray(TIMES.length)],
-        checkout: TIMES[getRandomArray(TIMES.length)],
-        features: FEATURES[getRandomArray(FEATURES.length)],
-        description: DESCRIPTIONS[getRandomArray(DESCRIPTIONS.length)],
-        photos: PHOTOS[getRandomArray(PHOTOS.length)]
+        // address: byX + ', ' + byY,
+        price: getRandomNumber(10000, 0),
+        type: TYPES[getRandomNumber(TYPES.length)],
+        rooms: getRandomNumber(20, 0),
+        guests: getRandomNumber(100, 0),
+        checkin: TIMES[getRandomNumber(TIMES.length)],
+        checkout: TIMES[getRandomNumber(TIMES.length)],
+        features: FEATURES[getRandomNumber(FEATURES.length)],
+        description: DESCRIPTIONS[getRandomNumber(DESCRIPTIONS.length)],
+        photos: PHOTOS[getRandomNumber(PHOTOS.length)]
       },
       location: {
-        x: getRandomNumber(map.offsetWidth);
-        y: getRandomNumber(map.offsetHeight);
+        x: getRandomNumber(map.offsetWidth),
+        y: getRandomNumber(map.offsetHeight)
       }
     };
   }
@@ -90,24 +85,45 @@ var getRental = function (count) {
   return appartments;
 };
 
-// временно убираем класс у блока map
+//ФУНКЦИЯ временно убирает класс у блока map
 var showMap = function () {
   map.classList.remove('map--faded');
 };
+
+//ФУНКЦИЯ которая создает разметку с рандомно сгенерированными данными, которую необходимо вставить в карту
+var createAppartment = function (data) {
+  var fragment = document.createDocumentFragment();
+
+  for (var i = 0; i < data.length; i++) {
+
+    var pinElement = pinTemplate.cloneNode(true);
+    var pinImage = pinElement.querySelector('img');
+
+    pinElement.style = 'left: ' + data[i].location.x + 'px;' + 'top: ' + data[i].location.y + 'px;';
+    pinImage.src = data[i].author.avatar;
+    pinImage.alt = data[i].offer.title;
+
+    fragment.appendChild(pinElement);
+  }
+
+  return fragment;
+}
+
+// создали рандомный массив объектов и передали 8 эл
+var appartments = getRental(TOTAL);
+// console.log(appartments);
+
+// наполняем наше дом дерево данными
+var appartmentsElement = createAppartment(appartments);
+
+// добавляем аппартаменты на карту
+pin.appendChild(appartmentsElement);
 
 showMap();
 
 
 // + Вызов функции которая будет отбражатть карту
-// функция которая будет генерировать рандомные данные аппартаментов
+// + функция которая будет генерировать рандомные данные аппартаментов
 // функция которая будет создавать наполненный DOM-элемент данными
 // функция будет делать рендер аппартаментов
 
-/*
-
-"location": {
-  "x": случайное число, координата x метки на карте. Значение ограничено размерами блока, в котором перетаскивается метка.
-  "y": случайное число, координата y метки на карте от 130 до 630.
-}
-
-/*
