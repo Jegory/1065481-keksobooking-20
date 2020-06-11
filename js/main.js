@@ -46,7 +46,7 @@ var PHOTOS = [
 ];
 
 var map = document.querySelector('.map');
-var pin = document.querySelector('.map__pins');
+var mapPins = document.querySelector('.map__pins');
 var pinTemplate = document.querySelector('#pin').content.querySelector('.map__pin');
 
 // ФУНКЦИЯ random из числа
@@ -54,6 +54,7 @@ var getRandomNumber = function (max, min) {
   return Math.floor(Math.random() * (max - min + 1));
 };
 
+// ФУНКЦИЯ с объктками аппартаментов
 var getRental = function (count) {
   var appartments = [];
 
@@ -76,8 +77,8 @@ var getRental = function (count) {
         photos: PHOTOS[getRandomNumber(PHOTOS.length)]
       },
       location: {
-        x: getRandomNumber(map.offsetWidth),
-        y: getRandomNumber(map.offsetHeight)
+        x: getRandomNumber(map.offsetWidth, 0),
+        y: getRandomNumber(map.offsetHeight, 0)
       }
     };
   }
@@ -85,12 +86,12 @@ var getRental = function (count) {
   return appartments;
 };
 
-//ФУНКЦИЯ временно убирает класс у блока map
+// ФУНКЦИЯ временно убирает класс у блока map
 var showMap = function () {
   map.classList.remove('map--faded');
 };
 
-//ФУНКЦИЯ которая создает разметку с рандомно сгенерированными данными, которую необходимо вставить в карту
+// ФУНКЦИЯ которая создает разметку с рандомно сгенерированными данными, которую необходимо вставить в карту
 var createAppartment = function (data) {
   var fragment = document.createDocumentFragment();
 
@@ -107,7 +108,7 @@ var createAppartment = function (data) {
   }
 
   return fragment;
-}
+};
 
 // создали рандомный массив объектов и передали 8 эл
 var appartments = getRental(TOTAL);
@@ -117,13 +118,6 @@ var appartments = getRental(TOTAL);
 var appartmentsElement = createAppartment(appartments);
 
 // добавляем аппартаменты на карту
-pin.appendChild(appartmentsElement);
+mapPins.appendChild(appartmentsElement);
 
 showMap();
-
-
-// + Вызов функции которая будет отбражатть карту
-// + функция которая будет генерировать рандомные данные аппартаментов
-// функция которая будет создавать наполненный DOM-элемент данными
-// функция будет делать рендер аппартаментов
-
