@@ -45,6 +45,9 @@ var PHOTOS = [
   'http://o0.github.io/assets/images/tokyo/hotel3.jpg',
 ];
 
+var MINY = 130;
+var MAXY = 630;
+
 var RoomtType = {
   one: '1',
   two: '2',
@@ -70,22 +73,20 @@ var selects = document.querySelectorAll('select');
 var inputs = document.querySelectorAll('input');
 var forActive = false;
 
+var photosContainerPopup = document.querySelector('.popup__photos');
+var startPhotos = document.querySelector('.popup__photo');
+
 // form variables (validation)
-var offerCapacity = form.querySelector('#capacity');
-var offerRoomNumber = form.querySelector('#room_number');
-var offerTitle = form.querySelector('#title');
-var offerPrice = form.querySelectorAll('#price');
+var formCapacity = form.querySelector('#capacity');
+var formRoomNumber = form.querySelector('#room_number');
+var formTitle = form.querySelector('#title');
+var formPrice = form.querySelectorAll('#price');
 
-// x-y variables
-var title = document.querySelector('.map__title');
-var filters = document.querySelector('.map__filters-container');
-var maxY = title.offsetHeight;
-var minY = filters.offsetHeight;
-// map.offsetHeight - (filters.offsetHeight + title.offsetHeight);
-
-// ФУНКЦИЯ random из числа
+// FUNCTION random from the number
 var getRandomNumber = function (max, min) {
-  return Math.floor(Math.random() * (max - min + 1));
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min + 1)) + min; // The maximum is inclusive and the minimum is inclusive
 };
 
 // ФУНКЦИЯ с объктками аппартаментов
@@ -93,13 +94,15 @@ var getRental = function (count) {
   var appartments = [];
 
   for (var i = 0; i < count; i++) {
+    var x = getRandomNumber(map.offsetWidth, 0);
+    var y = getRandomNumber(MAXY, MINY);
     appartments[i] = {
       author: {
         avatar: 'img/avatars/user0' + (i + 1) + '.png',
       },
       offer: {
         title: TITLES[getRandomNumber(TITLES.length)],
-        // address: byX + ', ' + byY,
+        address: x + ', ' + y,
         price: getRandomNumber(10000, 0),
         type: TYPES[getRandomNumber(TYPES.length)],
         rooms: getRandomNumber(20, 0),
@@ -108,11 +111,13 @@ var getRental = function (count) {
         checkout: TIMES[getRandomNumber(TIMES.length)],
         features: FEATURES[getRandomNumber(FEATURES.length)],
         description: DESCRIPTIONS[getRandomNumber(DESCRIPTIONS.length)],
-        photos: PHOTOS[getRandomNumber(PHOTOS.length)]
+        photos: PHOTOS[getRandomNumber(0, PHOTOS)]
+        // photos: PHOTOS.slice(0, getRandomNumber(PHOTOS.length))
+        // photos: PHOTOS[getRandomNumber(PHOTOS.length)] // slice
       },
       location: {
-        x: getRandomNumber(map.offsetWidth, 0),
-        y: getRandomNumber(maxY, minY)
+        x: x,
+        y: y
       }
     };
   }
@@ -148,17 +153,42 @@ var createFragmentPopup = function (appartment) {
   var cardElement = cardTemplate.cloneNode(true);
 
   cardElement.querySelector('.popup__title').textContent = appartment.offer.title;
-  // cardElement.querySelector('.popup__text--adress').textContent = appartment.offer.address;
+
+  cardElement.querySelector('.popup__text--address').textContent = appartment.offer.address;
   cardElement.querySelector('.popup__text--price').textContent = appartment.offer.price + ' ₽/ночь';
   cardElement.querySelector('.popup__type').textContent = appartment.offer.type;
   cardElement.querySelector('.popup__text--capacity').textContent = appartment.offer.rooms + ' комнаты для ' + appartment.offer.guests + ' гостей';
   cardElement.querySelector('.popup__text--time').textContent = 'Заезд после ' + appartment.offer.checkin + ', выезд до ' + appartment.offer.checkout;
   cardElement.querySelector('.popup__features').textContent = appartment.offer.description;
   cardElement.querySelector('.popup__avatar').src = appartment.author.avatar;
+  // checkContainerPhotos(cardElement, appartment.offer.photos);
+  cardElement.querySelector('.popup__photos').src = appartment.offer.photos;
 
   return cardElement;
-}
+};
 
+// FUNCTION Clone photo in container
+var clonePhotos = function (popupPicture, photos) {
+  var fragment = document.createDocumentFragment(); // create new
+  startPhotos.remove(); // clear container
+  // var img = '';
+
+  for (var j = 0; j < photos.length; j++) {
+    var cloneImage = startPhotos.nodeClone(true); // clone photo in variables
+    cloneImage.src = photos[j];
+    fragment.appendChild(cloneImage);
+  }
+  popupPicture.appenChild(fragment);
+};
+
+// FUNCTION Check container - if no photo, - delete container popup__photos
+var checkContainerPhotos = function (images) {
+  if (photosContainerPopup.length === 0) {
+    photosContainerPopup.remove(); // if no photo - delete container
+  } else {
+    clonePhotos(photosContainerPopup, images); // else: call the function - clonePhotos
+  }
+};
 
 // создали рандомный массив объектов и передали 8 эл
 var appartments = getRental(TOTAL);
@@ -176,8 +206,7 @@ map.appendChild(fragmentPopup);
 
 showMap();
 
-
-// // Module - 4 (total 4 parts)
+// console.log(arrayTest); // // Module - 4 (total 4 parts)
 
 // 4.1 page activation FUNCTION
 // var activityPage = function (data) {
