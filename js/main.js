@@ -63,6 +63,7 @@ var GuestType = {
 };
 
 var map = document.querySelector('.map');
+var mapFiltersContainer = document.querySelector('.map__filters-container');
 var mapPins = document.querySelector('.map__pins');
 var pinTemplate = document.querySelector('#pin').content.querySelector('.map__pin');
 var cardTemplate = document.querySelector('#card').content.querySelector('.map__card');
@@ -141,9 +142,9 @@ var createApartment = function (data) {
   return fragment;
 };
 
-// FUNCTION Add random features
-var addFeatures = function (data) {
-  var features = document.querySelector('.popup__features');
+// FUNCTION Add random FEATURES
+var addFeatures = function (data, cardElement) {
+  var features = cardElement.querySelector('.popup__features');
   var chlildFeatures = features.querySelector('.popup__feature');
 
   while (features.firstChild) {
@@ -151,18 +152,56 @@ var addFeatures = function (data) {
   }
 
   data.forEach(function (item) {
-    var cloneChild = chlildFeatures.nodeClone(true);
+    var cloneChild = chlildFeatures.cloneNode(true);
     var className = 'popup__feature--' + item;
 
     cloneChild.classList.remove('popup__feature--wifi');
     cloneChild.classList.add(className);
     features.appendChild(cloneChild);
   });
-
 };
 
+// FUNCTION Clone PHOTO in container
+
+// var addPhoto = function (photos, cardElement) {
+//   var img = '';
+
+//   for (var i = 0; i < photos.length; i++) {
+//     img += '<img src="' + photos[i] + '" class="popup__photo" width="45" height="40" alt="Фотография жилья">';
+//   }
+
+//   return img;
+// };
+
+// FUNCTION Check container - if no photo, - delete container popup__photos
+var checkContainerPhotos = function (add, images) {
+  var photosContainerPopup = add.querySelector('.popup__photos');
+
+  if (photosContainerPopup.length === 0) { // photosContainerPopup = document.querySelector('.popup__photos');
+    photosContainerPopup.remove(); // if no photo - delete container
+  } else {
+    clonePhotos(photosContainerPopup, images); // else: call the function - clonePhotos
+  }
+};
+
+var clonePhotos = function (popupPicture, photos) {
+  var startPhotos = popupPicture.querySelector('.popup__photo');
+
+  var fragment = document.createDocumentFragment(); // create new
+  startPhotos.remove(); // clear container
+
+  for (var j = 0; j < photos.length; j++) {
+    var cloneImage = startPhotos.cloneNode(true); // clone photo in variables
+    cloneImage.src = photos[j];
+    fragment.appendChild(cloneImage);
+  }
+  popupPicture.appenChild(fragment); // add element
+};
+
+// Отрисовывает эл на странице
 var createFragmentPopup = function (apartment) {
   var cardElement = cardTemplate.cloneNode(true);
+
 
   cardElement.querySelector('.popup__title').textContent = apartment.offer.title;
 
@@ -172,35 +211,14 @@ var createFragmentPopup = function (apartment) {
   cardElement.querySelector('.popup__text--capacity').textContent = apartment.offer.rooms + ' комнаты для ' + apartment.offer.guests + ' гостей';
   cardElement.querySelector('.popup__text--time').textContent = 'Заезд после ' + apartment.offer.checkin + ', выезд до ' + apartment.offer.checkout;
   cardElement.querySelector('.popup__avatar').src = apartment.author.avatar;
-  // checkContainerPhotos(cardElement, apartment.offer.photos);
+  addFeatures(apartment.offer.features, cardElement);
   cardElement.querySelector('.popup__photos').src = apartment.offer.photos;
-  addFeatures(apartment.offer.features);
+
+  // checkContainerPhotos(cardElement, apartment.offer.photos);
+  // mapFiltersContainer.insertAgasentElement('beforebegin', cardElement);
+  // addPhoto(apartment.offer.photos, cardElement);
+
   return cardElement;
-};
-
-// FUNCTION Clone photo in container
-var clonePhotos = function (popupPicture, photos) {
-  var photosContainerPopup = document.querySelector('.popup__photos');
-  var startPhotos = document.querySelector('.popup__photo');
-  var fragment = document.createDocumentFragment(); // create new
-  startPhotos.remove(); // clear container
-  // var img = '';
-
-  for (var j = 0; j < photos.length; j++) {
-    var cloneImage = startPhotos.nodeClone(true); // clone photo in variables
-    cloneImage.src = photos[j];
-    fragment.appendChild(cloneImage);
-  }
-  popupPicture.appenChild(fragment);
-};
-
-// FUNCTION Check container - if no photo, - delete container popup__photos
-var checkContainerPhotos = function (images) {
-  if (photosContainerPopup.length === 0) { // photosContainerPopup = document.querySelector('.popup__photos');
-    photosContainerPopup.remove(); // if no photo - delete container
-  } else {
-    clonePhotos(photosContainerPopup, images); // else: call the function - clonePhotos
-  }
 };
 
 // создали рандомный массив объектов и передали 8 эл
@@ -212,7 +230,6 @@ var apartmentsElement = createApartment(apartments);
 
 // добавляем аппартаменты на карту
 mapPins.appendChild(apartmentsElement);
-
 
 var fragmentPopup = createFragmentPopup(apartments[0]);
 map.appendChild(fragmentPopup);
