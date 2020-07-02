@@ -45,45 +45,77 @@ var PHOTOS = [
   'http://o0.github.io/assets/images/tokyo/hotel3.jpg',
 ];
 
+var MINY = 130;
+var MAXY = 630;
+
+var RoomType = {
+  one: '1',
+  two: '2',
+  three: '3',
+  hundret: '100'
+};
+
+var GuestType = {
+  one: '1',
+  two: '2',
+  three: '3',
+  notForGuest: '100'
+};
+
 var map = document.querySelector('.map');
+var mapFiltersContainer = document.querySelector('.map__filters-container');
 var mapPins = document.querySelector('.map__pins');
 var pinTemplate = document.querySelector('#pin').content.querySelector('.map__pin');
+var cardTemplate = document.querySelector('#card').content.querySelector('.map__card');
+var mapEvent = document.querySelector('.map__pin--main');
+var form = document.querySelector('.ad-form');
+var fieldsets = document.querySelectorAll('fieldset');
+var selects = document.querySelectorAll('select');
+var inputs = document.querySelectorAll('input');
+var forActive = false;
 
-// ФУНКЦИЯ random из числа
+// form variables (validation)
+var formTitle = form.querySelector('#title');
+var formPrice = form.querySelectorAll('#price');
+
+// FUNCTION random from the number
 var getRandomNumber = function (max, min) {
-  return Math.floor(Math.random() * (max - min + 1));
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min + 1)) + min; // The maximum is inclusive and the minimum is inclusive
 };
 
 // ФУНКЦИЯ с объктками аппартаментов
 var getRental = function (count) {
-  var appartments = [];
+  var apartments = [];
 
   for (var i = 0; i < count; i++) {
-    appartments[i] = {
+    var x = getRandomNumber(map.offsetWidth, 0);
+    var y = getRandomNumber(MAXY, MINY);
+    apartments[i] = {
       author: {
         avatar: 'img/avatars/user0' + (i + 1) + '.png',
       },
       offer: {
         title: TITLES[getRandomNumber(TITLES.length)],
-        // address: byX + ', ' + byY,
+        address: x + ', ' + y,
         price: getRandomNumber(10000, 0),
         type: TYPES[getRandomNumber(TYPES.length)],
         rooms: getRandomNumber(20, 0),
         guests: getRandomNumber(100, 0),
         checkin: TIMES[getRandomNumber(TIMES.length)],
         checkout: TIMES[getRandomNumber(TIMES.length)],
-        features: FEATURES[getRandomNumber(FEATURES.length)],
+        features: FEATURES.slice(0, getRandomNumber(0, FEATURES.length)),
         description: DESCRIPTIONS[getRandomNumber(DESCRIPTIONS.length)],
-        photos: PHOTOS[getRandomNumber(PHOTOS.length)]
+        photos: PHOTOS.slice(0, getRandomNumber(0, PHOTOS.length))
       },
       location: {
-        x: getRandomNumber(map.offsetWidth, 0),
-        y: getRandomNumber(map.offsetHeight, 0)
+        x: x,
+        y: y
       }
     };
   }
-
-  return appartments;
+  return apartments;
 };
 
 // ФУНКЦИЯ временно убирает класс у блока map
@@ -92,7 +124,7 @@ var showMap = function () {
 };
 
 // ФУНКЦИЯ которая создает разметку с рандомно сгенерированными данными, которую необходимо вставить в карту
-var createAppartment = function (data) {
+var createApartment = function (data) {
   var fragment = document.createDocumentFragment();
 
   for (var i = 0; i < data.length; i++) {
@@ -110,14 +142,173 @@ var createAppartment = function (data) {
   return fragment;
 };
 
+// FUNCTION Add random FEATURES
+var addFeatures = function (data, cardElement) {
+  var features = cardElement.querySelector('.popup__features');
+  var chlildFeatures = features.querySelector('.popup__feature');
+
+  while (features.firstChild) {
+    features.removeChild(features.firstChild);
+  }
+
+  data.forEach(function (item) {
+    var cloneChild = chlildFeatures.cloneNode(true);
+    var className = 'popup__feature--' + item;
+
+    cloneChild.classList.remove('popup__feature--wifi');
+    cloneChild.classList.add(className);
+    features.appendChild(cloneChild);
+  });
+};
+
+// FUNCTION Clone PHOTO in container
+
+// var addPhoto = function (photos, cardElement) {
+//   var img = '';
+
+//   for (var i = 0; i < photos.length; i++) {
+//     img += '<img src="' + photos[i] + '" class="popup__photo" width="45" height="40" alt="Фотография жилья">';
+//   }
+
+//   return img;
+// };
+
+// FUNCTION Check container - if no photo, - delete container popup__photos
+var checkContainerPhotos = function (add, images) {
+  var photosContainerPopup = add.querySelector('.popup__photos');
+
+  if (photosContainerPopup.length === 0) { // photosContainerPopup = document.querySelector('.popup__photos');
+    photosContainerPopup.remove(); // if no photo - delete container
+  } else {
+    clonePhotos(photosContainerPopup, images); // else: call the function - clonePhotos
+  }
+};
+
+var clonePhotos = function (popupPicture, photos) {
+  var startPhotos = popupPicture.querySelector('.popup__photo');
+
+  var fragment = document.createDocumentFragment(); // create new
+  startPhotos.remove(); // clear container
+
+  for (var j = 0; j < photos.length; j++) {
+    var cloneImage = startPhotos.cloneNode(true); // clone photo in variables
+    cloneImage.src = photos[j];
+    fragment.appendChild(cloneImage);
+  }
+  popupPicture.appenChild(fragment); // add element
+};
+
+// Отрисовывает эл на странице
+var createFragmentPopup = function (apartment) {
+  var cardElement = cardTemplate.cloneNode(true);
+
+
+  cardElement.querySelector('.popup__title').textContent = apartment.offer.title;
+
+  cardElement.querySelector('.popup__text--address').textContent = apartment.offer.address;
+  cardElement.querySelector('.popup__text--price').textContent = apartment.offer.price + ' ₽/ночь';
+  cardElement.querySelector('.popup__type').textContent = apartment.offer.type;
+  cardElement.querySelector('.popup__text--capacity').textContent = apartment.offer.rooms + ' комнаты для ' + apartment.offer.guests + ' гостей';
+  cardElement.querySelector('.popup__text--time').textContent = 'Заезд после ' + apartment.offer.checkin + ', выезд до ' + apartment.offer.checkout;
+  cardElement.querySelector('.popup__avatar').src = apartment.author.avatar;
+  addFeatures(apartment.offer.features, cardElement);
+  cardElement.querySelector('.popup__photos').src = apartment.offer.photos;
+
+  // checkContainerPhotos(cardElement, apartment.offer.photos);
+  // mapFiltersContainer.insertAgasentElement('beforebegin', cardElement);
+  // addPhoto(apartment.offer.photos, cardElement);
+
+  return cardElement;
+};
+
 // создали рандомный массив объектов и передали 8 эл
-var appartments = getRental(TOTAL);
-// console.log(appartments);
+var apartments = getRental(TOTAL);
+console.log(apartments);
 
 // наполняем наше дом дерево данными
-var appartmentsElement = createAppartment(appartments);
+var apartmentsElement = createApartment(apartments);
 
 // добавляем аппартаменты на карту
-mapPins.appendChild(appartmentsElement);
+mapPins.appendChild(apartmentsElement);
+
+var fragmentPopup = createFragmentPopup(apartments[0]);
+map.appendChild(fragmentPopup);
 
 showMap();
+
+// // Module - 4 (total 3 parts)
+
+// 4.1 page activation FUNCTION
+// var activityPage = function (data) {
+//   forActive = true;
+//   map.classList.remove('map--faded');// active map
+//   form.classList.remove('ad-form--disabled');// active form
+//   createApartment(data);// show all pins on the page
+//   activityForm();
+// };
+
+// // 4.1 form activation FUNCTION (fieldset), (select), (input)
+// var activityForm = function () {
+//   Array.from(fieldsets).forEach(function (fieldset) {
+//     fieldset.disabled = !forActive; // If page is not active, then fieldset off.
+//   });
+//   Array.from(selects).forEach(function (select) {
+//     select.disabled = !forActive; // select off.
+//   });
+//   Array.from(inputs).forEach(function (input) {
+//     input.disabled = !forActive; // input off.
+//   });
+// };
+
+// // 4.2 page activation EVENT
+// var activePage = function (data) {
+//   mapEvent.addEventListener('keydown', function (evt) {
+//     if (evt.keyCode === 13) {
+//       evt.preventDefault();
+//       activityPage(data);
+//     }
+//    mapEvent.removeEventListener(('keydown', activePage); // Delete evt???
+//   });
+
+//   mapEvent.addEventListener('mousedown', function (evt) {
+//     if (evt.which === 0) {
+//       evt.preventDefault();
+//       activityPage(data);
+//     }
+//   });
+//   mapEvent.removeEventListener(('mousedown', activePage); // Delete evt???
+// };
+
+// //  4.3 page FUNCTION - room and guest form validation
+// var validCapasityVsRoom = function () {
+
+//   var formCapacity = document.querySelector('#capacity');
+//   var formRoomNumber = document.querySelector('#room_number');
+
+//   // var message = '';
+
+//   if (formRoomNumber.value === RoomType.one) { // 1 room not 1 guest
+//     if (formCapacity.value !== GuestType.one) { // check first if
+//       // message = 'Нужно выбрать не больше одного гостя';
+//       formCapacity.setCustomValidity('Нужно выбрать не больше одного гостя');
+//     }
+//   } else if (formRoomNumber.value === RoomType.two) { // if selected 2 rooms
+//     if (formCapacity.value !== GuestType.two) {
+//       // message = 'Нужно выбрать одного или двух гостей';
+//       formCapacity.setCustomValidity('Нужно выбрать одного или двух гостей');
+//     }
+//   } else if (formRoomNumber.value === RoomType.three) { // if selected 3 rooms
+//     if (formCapacity.value !== GuestType.three) {
+//       // message = 'Нужно выбрать от одного до трех гостей';
+//       formCapacity.setCustomValidity('Нужно выбрать от одного до трех гостей');
+//     }
+//   } else if (formRoomNumber.value === RoomType.handret) { // selected 100 rooms
+//     if (formCapacity.value !== GuestType.notForGuest) {
+//       // message = 'Не для гостей';
+//       formCapacity.setCustomValidity('Не для гостей');
+//     } else {
+//       formCapacity.setCustomValidity(''); // if form valid - no error message
+//     }
+//   }
+//   formCapacity.value.setCustomValidity(message);
+// };
