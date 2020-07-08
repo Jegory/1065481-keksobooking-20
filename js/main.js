@@ -63,7 +63,6 @@ var GuestType = {
 };
 
 var map = document.querySelector('.map');
-var mapFiltersContainer = document.querySelector('.map__filters-container');
 var mapPins = document.querySelector('.map__pins');
 var pinTemplate = document.querySelector('#pin').content.querySelector('.map__pin');
 var cardTemplate = document.querySelector('#card').content.querySelector('.map__card');
@@ -74,9 +73,12 @@ var selects = document.querySelectorAll('select');
 var inputs = document.querySelectorAll('input');
 var forActive = false;
 
-// form variables (validation)
-var formTitle = form.querySelector('#title');
-var formPrice = form.querySelectorAll('#price');
+var MouseDown = 0;
+var EnterDown = 13;
+
+// // form variables (validation)
+// var formTitle = form.querySelector('#title');
+// var formPrice = form.querySelectorAll('#price');
 
 // FUNCTION random from the number
 var getRandomNumber = function (max, min) {
@@ -85,7 +87,7 @@ var getRandomNumber = function (max, min) {
   return Math.floor(Math.random() * (max - min + 1)) + min; // The maximum is inclusive and the minimum is inclusive
 };
 
-// ФУНКЦИЯ с объктками аппартаментов
+// ФУНКЦИЯ с объeктками аппартаментов
 var getRental = function (count) {
   var apartments = [];
 
@@ -107,7 +109,7 @@ var getRental = function (count) {
         checkout: TIMES[getRandomNumber(TIMES.length)],
         features: FEATURES.slice(0, getRandomNumber(0, FEATURES.length)),
         description: DESCRIPTIONS[getRandomNumber(DESCRIPTIONS.length)],
-        photos: PHOTOS.slice(0, getRandomNumber(0, PHOTOS.length))
+        photos: PHOTOS.slice(0, getRandomNumber(0, PHOTOS.length + 1))
       },
       location: {
         x: x,
@@ -145,14 +147,14 @@ var createApartment = function (data) {
 // FUNCTION Add random FEATURES
 var addFeatures = function (data, cardElement) {
   var features = cardElement.querySelector('.popup__features');
-  var chlildFeatures = features.querySelector('.popup__feature');
+  var childFeatures = features.querySelector('.popup__feature');
 
   while (features.firstChild) {
     features.removeChild(features.firstChild);
   }
 
   data.forEach(function (item) {
-    var cloneChild = chlildFeatures.cloneNode(true);
+    var cloneChild = childFeatures.cloneNode(true);
     var className = 'popup__feature--' + item;
 
     cloneChild.classList.remove('popup__feature--wifi');
@@ -163,42 +165,24 @@ var addFeatures = function (data, cardElement) {
 
 // FUNCTION Clone PHOTO in container
 
-// var addPhoto = function (photos, cardElement) {
-//   var img = '';
-
-//   for (var i = 0; i < photos.length; i++) {
-//     img += '<img src="' + photos[i] + '" class="popup__photo" width="45" height="40" alt="Фотография жилья">';
-//   }
-
-//   return img;
-// };
-
 // FUNCTION Check container - if no photo, - delete container popup__photos
-var checkContainerPhotos = function (add, images) {
-  var photosContainerPopup = add.querySelector('.popup__photos');
+var addPhotos = function (images, element) {
+  var photosItem = element.querySelector('.popup__photos');
+  var firstPhoto = photosItem.querySelector('.popup__photo');
 
-  if (photosContainerPopup.length === 0) { // photosContainerPopup = document.querySelector('.popup__photos');
-    photosContainerPopup.remove(); // if no photo - delete container
-  } else {
-    clonePhotos(photosContainerPopup, images); // else: call the function - clonePhotos
+  while (photosItem.firstChild) {
+    photosItem.removeChild(photosItem.firstChild);
   }
+
+  images.forEach(function (item) {
+    var clonePhoto = firstPhoto.cloneNode(true);
+    clonePhoto.src = item;
+
+    photosItem.appendChild(clonePhoto);
+  });
 };
 
-var clonePhotos = function (popupPicture, photos) {
-  var startPhotos = popupPicture.querySelector('.popup__photo');
-
-  var fragment = document.createDocumentFragment(); // create new
-  startPhotos.remove(); // clear container
-
-  for (var j = 0; j < photos.length; j++) {
-    var cloneImage = startPhotos.cloneNode(true); // clone photo in variables
-    cloneImage.src = photos[j];
-    fragment.appendChild(cloneImage);
-  }
-  popupPicture.appenChild(fragment); // add element
-};
-
-// Отрисовывает эл на странице
+// Отрисовывает эл на странице, вставляем в DOM дерево
 var createFragmentPopup = function (apartment) {
   var cardElement = cardTemplate.cloneNode(true);
 
@@ -213,102 +197,112 @@ var createFragmentPopup = function (apartment) {
   cardElement.querySelector('.popup__avatar').src = apartment.author.avatar;
   addFeatures(apartment.offer.features, cardElement);
   cardElement.querySelector('.popup__photos').src = apartment.offer.photos;
-
-  // checkContainerPhotos(cardElement, apartment.offer.photos);
-  // mapFiltersContainer.insertAgasentElement('beforebegin', cardElement);
-  // addPhoto(apartment.offer.photos, cardElement);
+  addPhotos(apartment.offer.photos, cardElement);
 
   return cardElement;
 };
 
-// создали рандомный массив объектов и передали 8 эл
-var apartments = getRental(TOTAL);
-console.log(apartments);
+// var fragmentPopup = createFragmentPopup(apartments[0]);
+// map.appendChild(fragmentPopup);
 
-// наполняем наше дом дерево данными
-var apartmentsElement = createApartment(apartments);
 
-// добавляем аппартаменты на карту
-mapPins.appendChild(apartmentsElement);
-
-var fragmentPopup = createFragmentPopup(apartments[0]);
-map.appendChild(fragmentPopup);
-
-showMap();
-
-// // Module - 4 (total 3 parts)
+// Module - 4 (total 3 parts)
 
 // 4.1 page activation FUNCTION
-// var activityPage = function (data) {
-//   forActive = true;
-//   map.classList.remove('map--faded');// active map
-//   form.classList.remove('ad-form--disabled');// active form
-//   createApartment(data);// show all pins on the page
-//   activityForm();
+var activityPage = function (data) {
+
+  var apartments = getRental(TOTAL); // создали рандомный массив объектов и передали 8 эл
+
+  var apartmentsElement = createApartment(apartments); // наполняем наше дом дерево данными
+
+  mapPins.appendChild(apartmentsElement); // добавляем аппартаменты на карту
+
+  activityForm();
+  showMap();
+};
+
+// 4.1 form activation FUNCTION (fieldset), (select), (input)
+var activityForm = function () {
+  forActive = true;
+  form.classList.remove('ad-form--disabled');// active form
+  Array.from(fieldsets).forEach(function (fieldset) {
+    fieldset.disabled = !forActive; // If page is not active, then fieldset off.
+  });
+  Array.from(selects).forEach(function (select) {
+    select.disabled = !forActive; // select off.
+  });
+  Array.from(inputs).forEach(function (input) {
+    input.disabled = !forActive; // input off.
+  });
+};
+
+// function clickKeyEvent(evt) {
+//   return evt.keyCode === EnterDown;
 // };
 
-// // 4.1 form activation FUNCTION (fieldset), (select), (input)
-// var activityForm = function () {
-//   Array.from(fieldsets).forEach(function (fieldset) {
-//     fieldset.disabled = !forActive; // If page is not active, then fieldset off.
-//   });
-//   Array.from(selects).forEach(function (select) {
-//     select.disabled = !forActive; // select off.
-//   });
-//   Array.from(inputs).forEach(function (input) {
-//     input.disabled = !forActive; // input off.
-//   });
+// function clickMouseEvent(evt) {
+//   return evt.which === MouseDown;
 // };
 
-// // 4.2 page activation EVENT
-// var activePage = function (data) {
-//   mapEvent.addEventListener('keydown', function (evt) {
-//     if (evt.keyCode === 13) {
-//       evt.preventDefault();
-//       activityPage(data);
-//     }
-//    mapEvent.removeEventListener(('keydown', activePage); // Delete evt???
-//   });
-
-//   mapEvent.addEventListener('mousedown', function (evt) {
-//     if (evt.which === 0) {
-//       evt.preventDefault();
-//       activityPage(data);
-//     }
-//   });
-//   mapEvent.removeEventListener(('mousedown', activePage); // Delete evt???
+// function startApp(evtClose) {
+//   if (clickKeyEvent(evtClose) || clickMouseEvent(evtClose)) {
+//     evtClose.preventDefault();
+//     activityPage(evtClose);
+//   };
 // };
 
-// //  4.3 page FUNCTION - room and guest form validation
-// var validCapasityVsRoom = function () {
+// 4.2 page activation EVENT
+var startApp = function (data) {
+  mapEvent.addEventListener('keydown', function (evt) {
+    if (evt.keyCode === 13) {
+      evt.preventDefault();
+      activityPage(data);
+    }
+    mapEvent.removeEventListener('keydown', startApp); // Delete evt???
+  });
 
-//   var formCapacity = document.querySelector('#capacity');
-//   var formRoomNumber = document.querySelector('#room_number');
+  mapEvent.addEventListener('mousedown', function (evt) {
+    if (evt.which === 0) {
+      evt.preventDefault();
+      activityPage(data);
+    }
+  });
+  mapEvent.removeEventListener('mousedown', startApp); // Delete evt???
+};
 
-//   // var message = '';
+//  4.3 page FUNCTION - room and guest form validation
+var validCapasityVsRoom = function () {
 
-//   if (formRoomNumber.value === RoomType.one) { // 1 room not 1 guest
-//     if (formCapacity.value !== GuestType.one) { // check first if
-//       // message = 'Нужно выбрать не больше одного гостя';
-//       formCapacity.setCustomValidity('Нужно выбрать не больше одного гостя');
-//     }
-//   } else if (formRoomNumber.value === RoomType.two) { // if selected 2 rooms
-//     if (formCapacity.value !== GuestType.two) {
-//       // message = 'Нужно выбрать одного или двух гостей';
-//       formCapacity.setCustomValidity('Нужно выбрать одного или двух гостей');
-//     }
-//   } else if (formRoomNumber.value === RoomType.three) { // if selected 3 rooms
-//     if (formCapacity.value !== GuestType.three) {
-//       // message = 'Нужно выбрать от одного до трех гостей';
-//       formCapacity.setCustomValidity('Нужно выбрать от одного до трех гостей');
-//     }
-//   } else if (formRoomNumber.value === RoomType.handret) { // selected 100 rooms
-//     if (formCapacity.value !== GuestType.notForGuest) {
-//       // message = 'Не для гостей';
-//       formCapacity.setCustomValidity('Не для гостей');
-//     } else {
-//       formCapacity.setCustomValidity(''); // if form valid - no error message
-//     }
-//   }
-//   formCapacity.value.setCustomValidity(message);
-// };
+  var formCapacity = document.querySelector('#capacity');
+  var formRoomNumber = document.querySelector('#room_number');
+
+  // var message = '';
+
+  if (formRoomNumber.value === RoomType.one) { // 1 room not 1 guest
+    if (formCapacity.value !== GuestType.one) { // check first if
+      // message = 'Нужно выбрать не больше одного гостя';
+      formCapacity.setCustomValidity('Нужно выбрать не больше одного гостя');
+    }
+  } else if (formRoomNumber.value === RoomType.two) { // if selected 2 rooms
+    if (formCapacity.value !== GuestType.two) {
+      // message = 'Нужно выбрать одного или двух гостей';
+      formCapacity.setCustomValidity('Нужно выбрать одного или двух гостей');
+    }
+  } else if (formRoomNumber.value === RoomType.three) { // if selected 3 rooms
+    if (formCapacity.value !== GuestType.three) {
+      // message = 'Нужно выбрать от одного до трех гостей';
+      formCapacity.setCustomValidity('Нужно выбрать от одного до трех гостей');
+    }
+  } else if (formRoomNumber.value === RoomType.handret) { // selected 100 rooms
+    if (formCapacity.value !== GuestType.notForGuest) {
+      // message = 'Не для гостей';
+      formCapacity.setCustomValidity('Не для гостей');
+    } else {
+      formCapacity.setCustomValidity(''); // if form valid - no error message
+    }
+  }
+  // formCapacity.value.setCustomValidity(message);
+};
+
+activityPage();
+// startApp();
