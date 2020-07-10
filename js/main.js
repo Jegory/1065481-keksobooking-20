@@ -209,7 +209,7 @@ var createFragmentPopup = function (apartment) {
 // Module - 4 (total 3 parts)
 
 // 4.1 page activation FUNCTION
-var activityPage = function (data) {
+var activityPage = function () {
 
   var apartments = getRental(TOTAL); // создали рандомный массив объектов и передали 8 эл
 
@@ -236,39 +236,20 @@ var activityForm = function () {
   });
 };
 
-// function clickKeyEvent(evt) {
-//   return evt.keyCode === EnterDown;
-// };
-
-// function clickMouseEvent(evt) {
-//   return evt.which === MouseDown;
-// };
-
-// function startApp(evtClose) {
-//   if (clickKeyEvent(evtClose) || clickMouseEvent(evtClose)) {
-//     evtClose.preventDefault();
-//     activityPage(evtClose);
-//   };
-// };
+var mainPinHandler = function (evt) {
+  if (evt.keyCode === 13 || evt.which === 0) {
+    evt.preventDefault();
+    activityPage();
+  }
+};
 
 // 4.2 page activation EVENT
-var startApp = function (data) {
-  mapEvent.addEventListener('keydown', function (evt) {
-    if (evt.keyCode === 13) {
-      evt.preventDefault();
-      activityPage(data);
-    }
-    mapEvent.removeEventListener('keydown', startApp); // Delete evt???
-  });
-
-  mapEvent.addEventListener('mousedown', function (evt) {
-    if (evt.which === 0) {
-      evt.preventDefault();
-      activityPage(data);
-    }
-  });
-  mapEvent.removeEventListener('mousedown', startApp); // Delete evt???
+var startApp = function () {
+  mapEvent.addEventListener('keydown', mainPinHandler);
+  mapEvent.addEventListener('mousedown', mainPinHandler);
 };
+
+startApp();
 
 //  4.3 page FUNCTION - room and guest form validation
 var validCapasityVsRoom = function () {
@@ -304,5 +285,5 @@ var validCapasityVsRoom = function () {
   // formCapacity.value.setCustomValidity(message);
 };
 
-activityPage();
+// activityPage();
 // startApp();
